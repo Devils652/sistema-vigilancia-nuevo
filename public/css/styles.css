@@ -1,0 +1,23 @@
+body {
+    background-color: #f3f4f6;
+    font-family: "Segoe UI", sans-serif;
+}
+
+header h1 {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+nav a {
+    text-decoration: none;
+    font-weight: 500;
+}
+
+nav a:hover {
+    background-color: #e2e6ea;
+    border-radius: 5px;
+}
+
+footer {
+    margin-top: 50px;
+}
