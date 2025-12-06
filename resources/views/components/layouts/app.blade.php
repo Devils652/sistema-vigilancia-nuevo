@@ -17,8 +17,7 @@
         [x-cloak] { display: none !important; }
     </style>
 
-
-        <!-- Configuracion de tema  -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <script>
         if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -28,7 +27,6 @@
     </script>
 </head>
 
-<!-- se implementa Tailwind CSS en el body  -->
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-300 min-h-screen flex flex-col">
 
     <nav x-data="{ open: false }" class="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 transition-all">
