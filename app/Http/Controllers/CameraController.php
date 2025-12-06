@@ -25,12 +25,12 @@ class CameraController extends Controller
         }];
     }
 
-    public function index(Request $request)
+public function index(Request $request)
     {
         $this->authorize('ver_camaras');
 
         $userRole = Auth::user()->role?->name ?? 'user';
-        $query = Camera::query()->with('cameraGroup'); // <--- Eager loading para optimizar
+        $query = Camera::query()->with('cameraGroup');
 
         if (!in_array($userRole, ['admin', 'supervisor', 'mantenimiento'])) {
             $query->where('status', true);
@@ -38,19 +38,38 @@ class CameraController extends Controller
 
         $cameras = $query->orderBy('name')->get();
 
-        // Agrupar usando la relación en lugar del string plano
-        $groupedCameras = $cameras->groupBy(function ($item) {
-            return $item->cameraGroup ? $item->cameraGroup->name : 'Sin Grupo';
-        });
-
-        $sinGrupo = $groupedCameras->pull('Sin Grupo');
-        $groupedCameras = $groupedCameras->sortKeys();
+        // Agrupamos por ID del grupo para poder gestionarlos (Editar/Borrar)
+        $groupedCameras = $cameras->groupBy('camera_group_id');
         
-        if ($sinGrupo) {
-            $groupedCameras->put('Sin Grupo', $sinGrupo);
-        }
+        // Obtenemos todos los grupos para mapear nombres y IDs
+        $allGroups = CameraGroup::all()->keyBy('id');
 
-        return view('cameras.index', compact('groupedCameras'));
+        return view('cameras.index', compact('groupedCameras', 'allGroups'));
+    }
+
+    // --- NUEVOS MÉTODOS PARA GESTIÓN DE GRUPOS ---
+
+    public function updateGroup(Request $request, CameraGroup $cameraGroup)
+    {
+        $this->authorize('crear_camaras'); // Usamos el mismo permiso que crear
+        
+        $request->validate([
+            'name' => 'required|string|max:255|unique:camera_groups,name,' . $cameraGroup->id
+        ]);
+
+        $cameraGroup->update(['name' => $request->name]);
+
+        return back()->with('success', 'Grupo renombrado correctamente.');
+    }
+
+    public function destroyGroup(CameraGroup $cameraGroup)
+    {
+        $this->authorize('crear_camaras');
+        
+        // Las cámaras asociadas se pondrán en "null" (Sin Grupo) automáticamente por la BD
+        $cameraGroup->delete();
+
+        return back()->with('success', 'Grupo eliminado. Las cámaras ahora están sin asignar.');
     }
 
     public function storeGroup(Request $request)

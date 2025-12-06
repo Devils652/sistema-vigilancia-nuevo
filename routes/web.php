@@ -39,6 +39,8 @@ Route::middleware(['auth', 'no_cache', 'role:admin'])
         Route::get('/cameras/multiview', [CameraController::class, 'multiview'])->name('cameras.multiview');
         Route::post('/cameras/group', [CameraController::class, 'storeGroup'])->name('cameras.group.store'); // POST de creación de grupo
         Route::resource('cameras', CameraController::class);
+        Route::put('/cameras/group/{cameraGroup}', [CameraController::class, 'updateGroup'])->name('cameras.group.update');
+        Route::delete('/cameras/group/{cameraGroup}', [CameraController::class, 'destroyGroup'])->name('cameras.group.destroy');
     });
 
 // --- USUARIO (Guardia) ---
@@ -64,9 +66,10 @@ Route::middleware(['auth', 'no_cache', 'role:supervisor'])
 
         Route::prefix('cameras')->name('cameras.')->group(function () {
             Route::get('/multiview', [CameraController::class, 'multiview'])->name('multiview');
-            
+
             Route::post('/group', [CameraController::class, 'storeGroup'])->name('group.store'); // RUTA POST DEL MODAL
-            
+            Route::put('/cameras/group/{cameraGroup}', [CameraController::class, 'updateGroup'])->name('cameras.group.update');
+            Route::delete('/cameras/group/{cameraGroup}', [CameraController::class, 'destroyGroup'])->name('cameras.group.destroy');
             Route::get('/', [CameraController::class, 'index'])->name('index');
             Route::get('/create', [CameraController::class, 'create'])->name('create');
             Route::post('/', [CameraController::class, 'store'])->name('store');
@@ -91,6 +94,6 @@ Route::middleware(['auth', 'no_cache', 'role:mantenimiento'])
         Route::get('/cameras/multiview', [CameraController::class, 'multiview'])->name('cameras.multiview');
         Route::resource('cameras', CameraController::class)->except(['destroy', 'create', 'store']);
 
-         
-        
+
+
     });
