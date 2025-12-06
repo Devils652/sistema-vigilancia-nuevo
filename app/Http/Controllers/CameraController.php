@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Camera;
-use App\Models\CameraGroup; // <--- Usamos el modelo
+use App\Models\CameraGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -30,7 +30,7 @@ class CameraController extends Controller
         $this->authorize('ver_camaras');
 
         $userRole = Auth::user()->role?->name ?? 'user';
-        $query = Camera::query();
+        $query = Camera::query()->with('cameraGroup'); // <--- Eager loading para optimizar
 
         if (!in_array($userRole, ['admin', 'supervisor', 'mantenimiento'])) {
             $query->where('status', true);
@@ -38,8 +38,9 @@ class CameraController extends Controller
 
         $cameras = $query->orderBy('name')->get();
 
+        // Agrupar usando la relación en lugar del string plano
         $groupedCameras = $cameras->groupBy(function ($item) {
-            return $item->group ?: 'Sin Grupo';
+            return $item->cameraGroup ? $item->cameraGroup->name : 'Sin Grupo';
         });
 
         $sinGrupo = $groupedCameras->pull('Sin Grupo');
@@ -65,7 +66,7 @@ class CameraController extends Controller
     public function create()
     {
         $this->authorize('crear_camaras');
-        $groups = CameraGroup::all(); // <--- Enviamos los grupos
+        $groups = CameraGroup::all(); 
         return view('cameras.create', compact('groups'));
     }
 
@@ -74,11 +75,11 @@ class CameraController extends Controller
         $this->authorize('crear_camaras');
 
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'ip'       => $this->getIpValidationRules(),
-            'location' => 'nullable|string|max:255',
-            'status'   => 'required|boolean',
-            'group'    => 'nullable|string|max:255',
+            'name'            => 'required|string|max:255',
+            'ip'              => $this->getIpValidationRules(),
+            'location'        => 'nullable|string|max:255',
+            'status'          => 'required|boolean',
+            'camera_group_id' => 'nullable|exists:camera_groups,id', // <--- Validación de ID real
         ]);
 
         Camera::create([
@@ -92,7 +93,7 @@ class CameraController extends Controller
     public function edit(Camera $camera)
     {
         $this->authorize('editar_camaras');
-        $groups = CameraGroup::all(); // <--- Enviamos los grupos aquí también
+        $groups = CameraGroup::all();
         return view('cameras.edit', compact('camera', 'groups'));
     }
 
@@ -101,11 +102,11 @@ class CameraController extends Controller
         $this->authorize('editar_camaras');
 
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'ip'       => $this->getIpValidationRules(),
-            'location' => 'nullable|string|max:255',
-            'status'   => 'required|boolean',
-            'group'    => 'nullable|string|max:255',
+            'name'            => 'required|string|max:255',
+            'ip'              => $this->getIpValidationRules(),
+            'location'        => 'nullable|string|max:255',
+            'status'          => 'required|boolean',
+            'camera_group_id' => 'nullable|exists:camera_groups,id', // <--- Validación de ID real
         ]);
 
         $camera->update($validated);
@@ -113,9 +114,10 @@ class CameraController extends Controller
         return redirect()->route($this->getRedirectRoute())->with('success', 'Cámara actualizada.');
     }
 
-    // ... (Resto del archivo: show, destroy, getRedirectRoute, multiview, sin cambios) ...
     public function show(Camera $camera) { $this->authorize('ver_camaras'); return view('cameras.show', compact('camera')); }
+    
     public function destroy(Camera $camera) { $this->authorize('borrar_camaras'); $camera->delete(); return redirect()->route($this->getRedirectRoute())->with('success', 'Cámara eliminada.'); }
+    
     private function getRedirectRoute() {
         $role = Auth::user()->role?->name ?? 'user';
         return match ($role) {
@@ -125,5 +127,6 @@ class CameraController extends Controller
             default => 'user.cameras.index',
         };
     }
+    
     public function multiview() { $this->authorize('ver_camaras'); $cameras = Camera::where('status', true)->orderBy('name')->get(); return view('cameras.multiview', compact('cameras')); }
 }
