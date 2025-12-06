@@ -66,10 +66,15 @@ Route::middleware(['auth', 'no_cache', 'role:supervisor'])
 
         Route::prefix('cameras')->name('cameras.')->group(function () {
             Route::get('/multiview', [CameraController::class, 'multiview'])->name('multiview');
-
-            Route::post('/group', [CameraController::class, 'storeGroup'])->name('group.store'); // RUTA POST DEL MODAL
-            Route::put('/cameras/group/{cameraGroup}', [CameraController::class, 'updateGroup'])->name('cameras.group.update');
-            Route::delete('/cameras/group/{cameraGroup}', [CameraController::class, 'destroyGroup'])->name('cameras.group.destroy');
+            
+            // --- CORRECCIÓN AQUÍ ---
+            // Quitamos '/cameras' del inicio porque ya estamos dentro del prefijo 'cameras'
+            // Quitamos 'cameras.' del nombre porque ya estamos dentro del name 'cameras.'
+            
+            Route::post('/group', [CameraController::class, 'storeGroup'])->name('group.store');
+            Route::put('/group/{cameraGroup}', [CameraController::class, 'updateGroup'])->name('group.update');     // Antes estaba mal
+            Route::delete('/group/{cameraGroup}', [CameraController::class, 'destroyGroup'])->name('group.destroy'); // Antes estaba mal
+            
             Route::get('/', [CameraController::class, 'index'])->name('index');
             Route::get('/create', [CameraController::class, 'create'])->name('create');
             Route::post('/', [CameraController::class, 'store'])->name('store');
